@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import RegistrationForm from '@/components/RegistrationForm';
 import TypingChallenge from '@/components/TypingChallenge';
@@ -32,6 +31,10 @@ const Index = () => {
   const handleRestart = () => {
     setChallengeState(ChallengeState.TYPING);
     setTypedText('');
+  };
+
+  const handleBack = () => {
+    setChallengeState(ChallengeState.REGISTRATION);
   };
 
   const renderStepIndicator = () => {
@@ -73,7 +76,11 @@ const Index = () => {
           </Card>
         );
       case ChallengeState.TYPING:
-        return <TypingChallenge codeText={codingChallenge} onComplete={handleChallengeComplete} />;
+        return <TypingChallenge 
+                 codeText={codingChallenge} 
+                 onComplete={handleChallengeComplete} 
+                 onBack={handleBack} 
+               />;
       case ChallengeState.RESULTS:
         return (
           <ResultsDisplay

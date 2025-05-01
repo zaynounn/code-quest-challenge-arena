@@ -3,14 +3,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import Timer from './Timer';
 import { calculateAccuracy, calculateWPM } from '@/utils/typingUtils';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, PauseCircle } from 'lucide-react';
+import { PlayCircle, PauseCircle, ArrowLeft } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TypingChallengeProps {
   codeText: string;
   onComplete: (typedText: string) => void;
+  onBack?: () => void; // New prop for going back
 }
 
-const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete }) => {
+const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete, onBack }) => {
   const [typedText, setTypedText] = useState('');
   const [isActive, setIsActive] = useState(false);
   const [accuracy, setAccuracy] = useState(0);
@@ -23,6 +25,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const codeBlockRef = useRef<HTMLDivElement>(null);
   const CHALLENGE_DURATION = 180; // 3 minutes in seconds
+  const [savedTimeElapsed, setSavedTimeElapsed] = useState(0);
 
   // Generate line numbers when code changes
   useEffect(() => {
@@ -65,6 +68,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete 
     setIsActive(true);
     setIsPaused(false);
     setTypedText('');
+    setSavedTimeElapsed(0);
     setTimeElapsed(0);
     setTimeout(() => {
       if (inputRef.current) {
@@ -74,9 +78,24 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete 
   };
 
   const handlePauseResume = () => {
+    if (isPaused) {
+      setIsActive(true);
+    }
     setIsPaused(!isPaused);
+    
     if (isPaused && inputRef.current) {
       inputRef.current.focus();
+    }
+  };
+
+  const handleBackClick = () => {
+    setIsActive(false);
+    setIsPaused(false);
+    setTypedText('');
+    setTimeElapsed(0);
+    setSavedTimeElapsed(0);
+    if (onBack) {
+      onBack();
     }
   };
 
@@ -166,6 +185,18 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete 
   return (
     <div className="w-full max-w-4xl">
       <div className="flex flex-wrap justify-between items-center mb-4 gap-3 bg-secondary/20 p-3 rounded-lg backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleBackClick} 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+      
         <div className="stat-item">
           <div className="text-xs text-muted-foreground uppercase">Accuracy</div>
           <div className={`text-lg font-bold ${accuracy < 50 ? 'text-red-400' : (accuracy < 85 ? 'text-yellow-400' : 'text-green-400')}`}>
@@ -210,26 +241,28 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete 
       </div>
       
       <div className="relative overflow-hidden border border-secondary rounded-lg">
-        <div 
-          className="p-6 bg-code rounded-lg overflow-y-auto max-h-[500px] shadow-lg font-mono text-sm"
-          ref={codeBlockRef}
-        >
-          <div className="code-block flex flex-col">
-            {renderCode()}
+        <ScrollArea className="h-[500px]">
+          <div 
+            className="p-6 bg-code rounded-lg font-mono text-sm"
+            ref={codeBlockRef}
+          >
+            <div className="code-block flex flex-col">
+              {renderCode()}
+            </div>
           </div>
-          
-          <textarea
-            ref={inputRef}
-            value={typedText}
-            onChange={(e) => isActive && !isPaused && setTypedText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={!isActive || isPaused}
-            className="code-input"
-            spellCheck="false"
-            autoCorrect="off"
-            autoCapitalize="off"
-          />
-        </div>
+        </ScrollArea>
+        
+        <textarea
+          ref={inputRef}
+          value={typedText}
+          onChange={(e) => isActive && !isPaused && setTypedText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={!isActive || isPaused}
+          className="code-input"
+          spellCheck="false"
+          autoCorrect="off"
+          autoCapitalize="off"
+        />
       </div>
 
       <div className="mt-4 text-sm text-muted-foreground">

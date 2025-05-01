@@ -40,6 +40,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     if (totalScore >= 50) return 'text-yellow-500';
     return 'text-red-500';
   };
+
+  const getProgressColor = (value: number) => {
+    if (value < 50) return "bg-red-500";
+    if (value < 85) return "bg-yellow-500";
+    return "bg-green-500";
+  };
   
   const getScoreMessage = () => {
     if (totalScore >= 85) return 'Outstanding performance!';
@@ -88,12 +94,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
               <p className={`text-4xl font-bold ${getAccuracyColor()}`}>{accuracy}%</p>
               <Progress 
                 value={accuracy} 
-                className="w-32 h-2" 
-                indicatorClassName={
-                  accuracy < 50 ? "bg-red-500" : 
-                  accuracy < 85 ? "bg-yellow-500" : 
-                  "bg-green-500"
-                } 
+                className={`w-32 h-2 ${getProgressColor(accuracy)}`}
               />
             </div>
             
@@ -105,12 +106,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
               <p className={`text-4xl font-bold ${getWpmColor()}`}>{wpm} <span className="text-lg">WPM</span></p>
               <Progress 
                 value={Math.min(wpm, 100)} 
-                className="w-32 h-2" 
-                indicatorClassName={
-                  wpm < 20 ? "bg-red-500" : 
-                  wpm < 40 ? "bg-yellow-500" : 
-                  "bg-green-500"
-                } 
+                className={`w-32 h-2 ${getProgressColor(Math.min(wpm, 100))}`}
               />
             </div>
             
@@ -122,12 +118,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
               <p className={`text-4xl font-bold ${getScoreColor()}`}>{totalScore}</p>
               <Progress 
                 value={totalScore} 
-                className="w-32 h-2" 
-                indicatorClassName={
-                  totalScore < 50 ? "bg-red-500" : 
-                  totalScore < 70 ? "bg-yellow-500" : 
-                  "bg-green-500"
-                } 
+                className={`w-32 h-2 ${getProgressColor(totalScore)}`}
               />
             </div>
           </div>

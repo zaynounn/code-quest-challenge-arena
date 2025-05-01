@@ -13,6 +13,7 @@ interface TimerProps {
 const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick }) => {
   const [remainingTime, setRemainingTime] = useState(duration);
   const [progress, setProgress] = useState(100);
+  const [lastActiveTime, setLastActiveTime] = useState<number | null>(null);
   
   // Use a callback to safely handle timer completion
   const handleComplete = useCallback(() => {
@@ -25,8 +26,13 @@ const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick })
   }, [onTick]);
 
   useEffect(() => {
+    // When the timer becomes active, record the current time
+    if (isActive && lastActiveTime === null) {
+      setLastActiveTime(Date.now());
+    }
+    
     // Reset timer when not active
-    if (!isActive) {
+    if (!isActive && !lastActiveTime) {
       setRemainingTime(duration);
       setProgress(100);
       return;
@@ -57,8 +63,13 @@ const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick })
     
     return () => {
       if (interval) clearInterval(interval);
+      
+      // When timer becomes inactive, clear the lastActiveTime
+      if (!isActive && lastActiveTime !== null) {
+        setLastActiveTime(null);
+      }
     };
-  }, [isActive, duration, remainingTime, handleComplete, handleTick]);
+  }, [isActive, duration, remainingTime, handleComplete, handleTick, lastActiveTime]);
 
   // Format time as MM:SS
   const formatTime = () => {
@@ -67,14 +78,19 @@ const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick })
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const getProgressColor = () => {
+    if (progress < 20) return "bg-red-500";
+    if (progress < 50) return "bg-yellow-500";
+    return "bg-green-500";
+  };
+
   return (
     <div className="flex items-center space-x-2">
       <Clock className="h-5 w-5 text-primary" />
       <div className="font-mono text-lg font-bold">{formatTime()}</div>
       <Progress 
         value={progress} 
-        className="w-28 h-2" 
-        indicatorClassName={progress < 20 ? "bg-red-500" : progress < 50 ? "bg-yellow-500" : "bg-green-500"} 
+        className={`w-28 h-2 ${getProgressColor()}`}
       />
     </div>
   );
