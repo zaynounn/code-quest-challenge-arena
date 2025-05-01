@@ -1,7 +1,9 @@
 
 import React from 'react';
-import { calculateAccuracy, calculateWPM } from '@/utils/typingUtils';
 import { Button } from '@/components/ui/button';
+import { calculateAccuracy, calculateWPM } from '@/utils/typingUtils';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { RefreshCw, Trophy } from 'lucide-react';
 
 interface ResultsDisplayProps {
   originalText: string;
@@ -17,63 +19,83 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   onRestart,
 }) => {
   const accuracy = calculateAccuracy(originalText, typedText);
-  const wpm = calculateWPM(originalText, typedText, 180); // 3 minutes = 180 seconds
-  const charactersTyped = typedText.length;
-  const totalCharacters = originalText.length;
-  const percentageCompleted = Math.floor((charactersTyped / totalCharacters) * 100);
-
-  // Determine performance level
-  let performanceLevel = "Beginner";
-  if (accuracy > 95 && wpm > 60) {
-    performanceLevel = "Expert";
-  } else if (accuracy > 90 && wpm > 45) {
-    performanceLevel = "Advanced";
-  } else if (accuracy > 80 && wpm > 30) {
-    performanceLevel = "Intermediate";
-  }
+  const wpm = calculateWPM(originalText, typedText, 180); // 3 minutes
+  const totalScore = Math.floor(accuracy * 0.6 + wpm * 0.4); // 60% accuracy, 40% speed
+  
+  const getAccuracyColor = () => {
+    if (accuracy >= 85) return 'text-green-500';
+    if (accuracy >= 50) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+  
+  const getWpmColor = () => {
+    if (wpm >= 40) return 'text-green-500';
+    if (wpm >= 20) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+  
+  const getScoreColor = () => {
+    if (totalScore >= 70) return 'text-green-500';
+    if (totalScore >= 50) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+  
+  const getScoreMessage = () => {
+    if (totalScore >= 85) return 'Outstanding performance!';
+    if (totalScore >= 70) return 'Great job!';
+    if (totalScore >= 50) return 'Good effort!';
+    return 'Keep practicing!';
+  };
 
   return (
-    <div className="w-full max-w-lg p-8 bg-secondary/50 rounded-lg shadow-lg border border-secondary backdrop-blur-sm">
-      <h2 className="text-2xl font-bold text-center mb-6">Challenge Results</h2>
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-3xl flex items-center gap-2">
+          <Trophy className="text-yellow-500" />
+          Results for {userName}
+        </CardTitle>
+        <CardDescription>
+          Here's how you performed in the coding challenge
+        </CardDescription>
+      </CardHeader>
       
-      <div className="text-center mb-4">
-        <p className="text-lg">Great job, <span className="font-semibold">{userName}</span>!</p>
-      </div>
-      
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-background p-4 rounded-lg">
-            <div className="text-sm text-muted-foreground">Accuracy</div>
-            <div className="text-2xl font-bold">{accuracy}%</div>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div className="p-4 bg-muted rounded-lg">
+            <h3 className="text-muted-foreground text-sm uppercase mb-2">Accuracy</h3>
+            <p className={`text-3xl font-bold ${getAccuracyColor()}`}>{accuracy}%</p>
           </div>
           
-          <div className="bg-background p-4 rounded-lg">
-            <div className="text-sm text-muted-foreground">Speed</div>
-            <div className="text-2xl font-bold">{wpm} WPM</div>
+          <div className="p-4 bg-muted rounded-lg">
+            <h3 className="text-muted-foreground text-sm uppercase mb-2">Typing Speed</h3>
+            <p className={`text-3xl font-bold ${getWpmColor()}`}>{wpm} WPM</p>
           </div>
           
-          <div className="bg-background p-4 rounded-lg col-span-2">
-            <div className="text-sm text-muted-foreground">Completion</div>
-            <div className="mt-1 mb-2 font-bold">{percentageCompleted}%</div>
-            <div className="w-full bg-muted rounded-full h-2.5">
-              <div 
-                className="bg-primary h-2.5 rounded-full" 
-                style={{ width: `${percentageCompleted}%` }}
-              ></div>
-            </div>
+          <div className="p-4 bg-muted rounded-lg">
+            <h3 className="text-muted-foreground text-sm uppercase mb-2">Total Score</h3>
+            <p className={`text-3xl font-bold ${getScoreColor()}`}>{totalScore}</p>
+            <p className="text-sm mt-2">{getScoreMessage()}</p>
           </div>
         </div>
-        
-        <div className="bg-background p-4 rounded-lg">
-          <div className="text-sm text-muted-foreground mb-1">Performance Level</div>
-          <div className="text-xl font-bold">{performanceLevel}</div>
+
+        <div className="mt-8">
+          <h3 className="font-semibold mb-3">Challenge Breakdown:</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Total characters typed: <strong>{typedText.length}</strong></li>
+            <li>Correct characters: <strong>{Math.floor(accuracy * typedText.length / 100)}</strong></li>
+            <li>Errors: <strong>{typedText.length - Math.floor(accuracy * typedText.length / 100)}</strong></li>
+            <li>Challenge time: <strong>3 minutes</strong></li>
+          </ul>
         </div>
-        
-        <Button onClick={onRestart} className="w-full">
+      </CardContent>
+      
+      <CardFooter>
+        <Button onClick={onRestart} className="w-full" variant="default">
+          <RefreshCw className="mr-2" />
           Try Again
         </Button>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 

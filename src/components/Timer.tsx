@@ -1,59 +1,57 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Progress } from '@/components/ui/progress';
+import { Clock } from 'lucide-react';
 
 interface TimerProps {
   duration: number; // in seconds
-  onComplete: () => void;
   isActive: boolean;
+  onComplete: () => void;
+  onTick?: (remainingTime: number) => void;
 }
 
-const Timer: React.FC<TimerProps> = ({ duration, onComplete, isActive }) => {
-  const [timeLeft, setTimeLeft] = useState(duration);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick }) => {
+  const [remainingTime, setRemainingTime] = useState(duration);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
-    if (isActive && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            onComplete();
-            return 0;
-          }
-          return prevTime - 1;
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isActive && remainingTime > 0) {
+      interval = setInterval(() => {
+        setRemainingTime((prev) => {
+          const newTime = prev - 1;
+          if (onTick) onTick(newTime);
+          return newTime;
         });
+        setProgress((remainingTime - 1) / duration * 100);
       }, 1000);
-    } else if (!isActive && timerRef.current) {
-      clearInterval(timerRef.current);
+    } else if (remainingTime === 0 && isActive) {
+      onComplete();
     }
-
+    
+    if (!isActive) {
+      setRemainingTime(duration);
+      setProgress(100);
+    }
+    
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (interval) clearInterval(interval);
     };
-  }, [isActive, onComplete]);
-
-  // Reset timer when duration changes
-  useEffect(() => {
-    setTimeLeft(duration);
-  }, [duration]);
+  }, [remainingTime, isActive, duration, onComplete, onTick]);
 
   // Format time as MM:SS
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-  // Calculate progress percentage
-  const progressPercentage = ((duration - timeLeft) / duration) * 100;
+  const formatTime = () => {
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = remainingTime % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="font-mono text-xl font-bold">{formattedTime}</div>
-      <div className="w-full bg-secondary rounded-full h-2.5">
-        <div 
-          className="bg-primary h-2.5 rounded-full transition-all duration-1000" 
-          style={{ width: `${progressPercentage}%` }}
-        ></div>
-      </div>
+    <div className="flex items-center space-x-2">
+      <Clock className="h-4 w-4" />
+      <div className="font-mono text-lg">{formatTime()}</div>
+      <Progress value={progress} className="w-24" />
     </div>
   );
 };
