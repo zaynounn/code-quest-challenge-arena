@@ -38,3 +38,17 @@ export const calculateWPM = (
   // Convert to words per minute
   return Math.floor(charsPerMinute / avgWordLength);
 };
+
+// Phone number validation functions
+export const validateUSPhoneNumber = (phoneNumber: string): boolean => {
+  const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+  return phoneRegex.test(phoneNumber);
+};
+
+export const validateLebanesePhoneNumber = (phoneNumber: string): boolean => {
+  // Lebanese phone numbers typically start with +961 followed by 8 digits
+  // or 03/70/71/etc. followed by 6 digits
+  const phoneRegex = /^(\+961|0)([1-9])(\d{6,7})$/;
+  return phoneRegex.test(phoneNumber);
+};
+

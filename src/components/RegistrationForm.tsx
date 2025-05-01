@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserData } from '@/utils/challengeData';
 import { toast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { validateUSPhoneNumber, validateLebanesePhoneNumber } from '@/utils/typingUtils';
 
 interface RegistrationFormProps {
   onRegister: (userData: UserData) => void;
@@ -12,6 +14,7 @@ interface RegistrationFormProps {
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegister }) => {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [isLebanese, setIsLebanese] = useState(false);
   const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
 
@@ -29,16 +32,26 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegister }) => {
       setNameError('');
     }
     
-    // Validate phone number - simple regex for basic validation
-    const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    // Validate phone number based on selected type
     if (phoneNumber.trim() === '') {
       setPhoneError('Please enter your phone number');
       isValid = false;
-    } else if (!phoneRegex.test(phoneNumber)) {
-      setPhoneError('Please enter a valid US phone number');
-      isValid = false;
+    } else if (isLebanese) {
+      // Lebanese phone validation
+      if (!validateLebanesePhoneNumber(phoneNumber)) {
+        setPhoneError('Please enter a valid Lebanese phone number (e.g., +9611234567 or 03123456)');
+        isValid = false;
+      } else {
+        setPhoneError('');
+      }
     } else {
-      setPhoneError('');
+      // US phone validation
+      if (!validateUSPhoneNumber(phoneNumber)) {
+        setPhoneError('Please enter a valid US phone number');
+        isValid = false;
+      } else {
+        setPhoneError('');
+      }
     }
     
     return isValid;
@@ -48,7 +61,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegister }) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onRegister({ name, phoneNumber });
+      onRegister({ 
+        name, 
+        phoneNumber,
+        phoneType: isLebanese ? 'Lebanese' : 'US'
+      });
       toast({
         title: "Registration successful!",
         description: "Get ready for the coding challenge!",
@@ -58,12 +75,20 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegister }) => {
 
   // Format phone number as user types
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/\D/g, '').substring(0, 10);
-    const formattedNumber = formatPhoneNumber(input);
-    setPhoneNumber(formattedNumber);
+    const input = e.target.value;
+    
+    if (isLebanese) {
+      // For Lebanese numbers, we just take the input as is
+      setPhoneNumber(input);
+    } else {
+      // For US numbers, we format it
+      const numericInput = input.replace(/\D/g, '').substring(0, 10);
+      const formattedNumber = formatUSPhoneNumber(numericInput);
+      setPhoneNumber(formattedNumber);
+    }
   };
 
-  const formatPhoneNumber = (input: string): string => {
+  const formatUSPhoneNumber = (input: string): string => {
     if (input.length <= 3) {
       return input;
     } else if (input.length <= 6) {
@@ -71,6 +96,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegister }) => {
     } else {
       return `(${input.slice(0, 3)}) ${input.slice(3, 6)}-${input.slice(6, 10)}`;
     }
+  };
+
+  const handleToggleChange = () => {
+    setIsLebanese(!isLebanese);
+    setPhoneNumber(''); // Clear phone number when switching formats
+    setPhoneError('');  // Clear errors
   };
 
   return (
@@ -93,15 +124,26 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegister }) => {
         </div>
         
         <div className="space-y-1">
-          <label htmlFor="phoneNumber" className="text-sm font-medium">
-            Phone Number
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label htmlFor="phoneNumber" className="text-sm font-medium">
+              Phone Number
+            </label>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs">US</span>
+              <Switch 
+                checked={isLebanese} 
+                onCheckedChange={handleToggleChange} 
+                aria-label="Toggle phone number format"
+              />
+              <span className="text-xs">Lebanese</span>
+            </div>
+          </div>
           <Input
             id="phoneNumber"
             type="tel"
             value={phoneNumber}
             onChange={handlePhoneChange}
-            placeholder="(123) 456-7890"
+            placeholder={isLebanese ? "+9611234567 or 03123456" : "(123) 456-7890"}
             className={`w-full ${phoneError ? 'border-red-500' : ''}`}
           />
           {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}

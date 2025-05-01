@@ -64,4 +64,5 @@ console.log("Sorted array:", sortedArray);
 export interface UserData {
   name: string;
   phoneNumber: string;
+  phoneType?: 'US' | 'Lebanese';
 }
