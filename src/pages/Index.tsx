@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import RegistrationForm from '@/components/RegistrationForm';
 import TypingChallenge from '@/components/TypingChallenge';
@@ -5,6 +6,7 @@ import ResultsDisplay from '@/components/ResultsDisplay';
 import { UserData, codingChallenge } from '@/utils/challengeData';
 import { Toaster } from '@/components/ui/toaster';
 import { Card, CardContent } from '@/components/ui/card';
+import ThemeToggle from '@/components/ThemeToggle';
 import { KeyboardIcon, AwardIcon, UserIcon } from 'lucide-react';
 
 enum ChallengeState {
@@ -69,7 +71,7 @@ const Index = () => {
     switch (challengeState) {
       case ChallengeState.REGISTRATION:
         return (
-          <Card className="bg-secondary/10 backdrop-blur-sm border border-secondary/30">
+          <Card className="bg-secondary/10 backdrop-blur-sm border border-secondary/30 animate-fade-in">
             <CardContent className="pt-6">
               <RegistrationForm onRegister={handleRegister} />
             </CardContent>
@@ -79,7 +81,7 @@ const Index = () => {
         return <TypingChallenge 
                  codeText={codingChallenge} 
                  onComplete={handleChallengeComplete} 
-                 onBack={handleBack} 
+                 onBack={handleBack}
                />;
       case ChallengeState.RESULTS:
         return (
@@ -94,7 +96,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center py-12 px-4 bg-gradient-to-br from-background to-secondary/30">
+    <div className="min-h-screen flex flex-col items-center py-12 px-4 bg-gradient-to-br from-background to-secondary/30 transition-colors duration-300">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="text-center mb-10">
         <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-primary to-purple-400 text-transparent bg-clip-text">
           Code Quest Challenge Arena
@@ -117,15 +123,15 @@ const Index = () => {
       
       <div className="mt-auto pt-8 text-center text-sm text-muted-foreground">
         <div className="flex flex-col md:flex-row justify-center gap-4 mb-4">
-          <div className="feature">
+          <div className="feature bg-secondary/10 p-3 rounded-lg backdrop-blur-sm hover:bg-secondary/20 transition-all">
             <h3 className="text-primary font-medium">Improves Accuracy</h3>
             <p className="text-xs">Practice makes perfect. Regular typing practice enhances precision.</p>
           </div>
-          <div className="feature">
+          <div className="feature bg-secondary/10 p-3 rounded-lg backdrop-blur-sm hover:bg-secondary/20 transition-all">
             <h3 className="text-primary font-medium">Boosts Speed</h3>
             <p className="text-xs">Challenge yourself to type faster with each attempt.</p>
           </div>
-          <div className="feature">
+          <div className="feature bg-secondary/10 p-3 rounded-lg backdrop-blur-sm hover:bg-secondary/20 transition-all">
             <h3 className="text-primary font-medium">Tracks Progress</h3>
             <p className="text-xs">Review detailed stats to see your improvement over time.</p>
           </div>
