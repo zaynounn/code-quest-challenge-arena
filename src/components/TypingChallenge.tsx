@@ -160,6 +160,67 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
     }
   };
 
+  // Update cursor position when user clicks in the code area
+  const handleCodeClick = (e: React.MouseEvent<HTMLDivElement>, lineIndex: number, charIndex: number) => {
+    if (!isActive || isPaused) return;
+    
+    e.preventDefault();
+    
+    // Get current text lines
+    const lines = typedText.split('\n');
+    
+    // Ensure we have enough lines
+    while (lines.length <= lineIndex) {
+      lines.push('');
+    }
+    
+    // Ensure the target line is long enough for the cursor
+    const targetLine = lines[lineIndex];
+    const codeLines = codeText.split('\n');
+    const codeLine = codeLines[lineIndex] || '';
+    
+    // Only allow positioning within the length of the code or typed text (whichever is longer)
+    const maxCharIndex = Math.max(targetLine.length, charIndex);
+    
+    // Update cursor position
+    setCursorPosition({
+      line: lineIndex,
+      char: Math.min(maxCharIndex, charIndex)
+    });
+    
+    // Update focus line
+    setFocusLine(lineIndex);
+    
+    // Now update the textarea selection and focus
+    if (inputRef.current) {
+      // Calculate the position in the textarea
+      let position = 0;
+      for (let i = 0; i < lineIndex; i++) {
+        position += lines[i].length + 1; // +1 for the newline character
+      }
+      position += Math.min(maxCharIndex, charIndex);
+      
+      inputRef.current.focus();
+      inputRef.current.setSelectionRange(position, position);
+      
+      // If we're clicking beyond the current text, we need to add spaces
+      if (charIndex > targetLine.length) {
+        const spacesToAdd = charIndex - targetLine.length;
+        const newLine = targetLine + ' '.repeat(spacesToAdd);
+        lines[lineIndex] = newLine;
+        setTypedText(lines.join('\n'));
+        
+        // Reposition cursor after state update
+        setTimeout(() => {
+          if (inputRef.current) {
+            const newPosition = position + (charIndex - targetLine.length);
+            inputRef.current.setSelectionRange(newPosition, newPosition);
+          }
+        }, 0);
+      }
+    }
+  };
+
   const handleTimerComplete = () => {
     setIsActive(false);
     onComplete(typedText);
@@ -175,6 +236,31 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
     }
   };
 
+  // Handle textarea input change with manual cursor positioning
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!isActive || isPaused) return;
+    
+    const newValue = e.target.value;
+    setTypedText(newValue);
+    
+    // The cursor position will be updated by the effect that monitors typedText
+    // We need to store where the cursor is in the textarea for proper click positioning
+    if (inputRef.current) {
+      const selectionStart = inputRef.current.selectionStart || 0;
+      const textBeforeCursor = newValue.substring(0, selectionStart);
+      const lines = textBeforeCursor.split('\n');
+      const currentLineIndex = lines.length - 1;
+      const currentCharIndex = lines[currentLineIndex]?.length || 0;
+      
+      // Update cursor position manually if needed
+      setCursorPosition({
+        line: currentLineIndex,
+        char: currentCharIndex
+      });
+      setFocusLine(currentLineIndex);
+    }
+  };
+
   // Render code with highlighting based on user input
   const renderCode = () => {
     const codeLines = codeText.split('\n');
@@ -187,7 +273,20 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
       const isCurrentLine = lineIndex === cursorPosition.line;
       
       return (
-        <div key={lineIndex} className={`flex ${isCurrentLine ? 'bg-secondary/30' : ''}`}>
+        <div 
+          key={lineIndex} 
+          className={`flex ${isCurrentLine ? 'bg-secondary/30' : ''}`}
+          onClick={(e) => {
+            // Calculate which character was clicked based on mouse position
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            // Estimate character width (adjust as needed)
+            const charWidth = 8; // approximate character width in pixels
+            const clickedCharIndex = Math.floor(x / charWidth) - 6; // adjust for padding and line numbers
+            
+            handleCodeClick(e, lineIndex, Math.max(0, clickedCharIndex));
+          }}
+        >
           <div className="text-muted-foreground w-12 text-right pr-2 select-none font-mono">
             {lineIndex + 1}
           </div>
@@ -209,7 +308,14 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
               const displayChar = char === ' ' ? ' ' : char;
               
               return (
-                <span key={charIndex} className={className}>
+                <span 
+                  key={charIndex} 
+                  className={className}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent parent div click handler
+                    handleCodeClick(e, lineIndex, charIndex);
+                  }}
+                >
                   {displayChar}
                   {/* Show blinking cursor at current position */}
                   {isCurrentLine && charIndex === cursorPosition.char && (
@@ -290,7 +396,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
       <div className="relative overflow-hidden border border-secondary rounded-lg">
         <ScrollArea className="h-[500px]">
           <div 
-            className="p-6 rounded-lg font-mono text-sm"
+            className="p-6 rounded-lg font-mono text-sm cursor-text"
             style={{ backgroundColor: 'hsl(var(--code))', color: 'hsl(var(--code-text))' }}
             ref={codeBlockRef}
           >
@@ -303,7 +409,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
         <textarea
           ref={inputRef}
           value={typedText}
-          onChange={(e) => isActive && !isPaused && setTypedText(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           disabled={!isActive || isPaused}
           className="code-input"
@@ -314,7 +420,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
       </div>
 
       <div className="mt-4 text-sm text-muted-foreground">
-        <p>Tips: Press Tab to insert 2 spaces. Type exactly as shown including all symbols and whitespace. Auto-indentation is enabled.</p>
+        <p>Tips: Click anywhere in the code to position your cursor. Press Tab to insert 2 spaces. Type exactly as shown including all symbols and whitespace.</p>
       </div>
     </div>
   );
