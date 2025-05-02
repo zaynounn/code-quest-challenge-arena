@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Timer from './Timer';
 import { calculateAccuracy, calculateWPM } from '@/utils/typingUtils';
@@ -161,10 +160,11 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
   };
 
   // Update cursor position when user clicks in the code area
-  const handleCodeClick = (e: React.MouseEvent<HTMLDivElement>, lineIndex: number, charIndex: number) => {
+  const handleCodeClick = (e: React.MouseEvent<Element, MouseEvent>, lineIndex: number, charIndex: number) => {
     if (!isActive || isPaused) return;
     
     e.preventDefault();
+    e.stopPropagation();
     
     // Get current text lines
     const lines = typedText.split('\n');
@@ -307,6 +307,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
               // Replace spaces with visible spaces
               const displayChar = char === ' ' ? ' ' : char;
               
+              // Here's the fixed click handler - we're using the proper event type
               return (
                 <span 
                   key={charIndex} 
