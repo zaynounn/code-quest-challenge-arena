@@ -3,48 +3,52 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 142.1 76.2% 36.3%;
+    --radius: 0.5rem;
+    --code: 220 13% 18%;
+  }
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 252 100% 70%;
-    --primary-foreground: 0 0% 98%;
-
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 0 0% 95%;
+    --card: 24 9.8% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 3.7% 15.9%;
+    --muted: 0 0% 15%;
     --muted-foreground: 240 5% 64.9%;
-
-    --accent: 240 3.7% 15.9%;
+    --accent: 12 6.5% 15.1%;
     --accent-foreground: 0 0% 98%;
-
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
+    --destructive-foreground: 0 85.7% 97.3%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 142.4 71.8% 29.2%;
+    --code: 220 13% 18%;
   }
 }
 
@@ -52,83 +56,45 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
 }
 
 @layer components {
-  .code-block {
-    @apply font-mono text-sm md:text-base tracking-tight leading-relaxed relative;
-    white-space: pre-wrap;
-  }
-  
-  .code-line {
-    @apply pl-1;
-    line-height: 1.5;
-  }
-  
   .code-input {
-    @apply absolute top-0 left-0 opacity-0 h-full w-full cursor-text z-10;
+    @apply absolute inset-0 opacity-0 cursor-text;
+    width: 100%;
+    height: 100%;
   }
 
   .code-character {
-    @apply inline-block transition-colors duration-100;
+    @apply relative;
+    white-space: pre;
   }
-  
+
   .code-character.correct {
     @apply text-green-400;
   }
-  
+
   .code-character.incorrect {
-    @apply text-red-400 bg-red-900/30;
+    @apply text-red-400;
   }
-  
+
   .code-character.current {
     @apply relative;
   }
-  
-  .code-character.current::after {
-    content: "";
-    @apply absolute h-5 w-0.5 bg-primary animate-cursor-blink -right-px;
+
+  .code-block {
+    @apply font-mono text-sm leading-relaxed;
+    tab-size: 2;
+  }
+
+  .bg-code {
+    @apply bg-secondary/20 backdrop-blur-sm;
   }
 
   .stat-item {
-    @apply px-3 py-1 rounded-md bg-secondary/30 min-w-[90px] text-center;
-  }
-
-  @keyframes cursor-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  .animate-cursor-blink {
-    animation: cursor-blink 1s infinite;
+    @apply bg-secondary/10 px-4 py-2 rounded-md backdrop-blur-sm;
   }
 }
-
-.bg-code {
-  background-color: #1e1e3f;
-  color: #fff;
-}
-
-.bg-code .code-character.correct {
-  color: #a5ff90;
-}
-
-.bg-code .code-character.incorrect {
-  color: #ff628c;
-  background-color: rgba(255, 98, 140, 0.2);
-}
-
-.bg-code .code-character.current::after {
-  background-color: #fad000;
-}
-
-/* Syntax highlighting colors */
-.keyword { color: #ff9d00; }
-.string { color: #ff628c; }
-.comment { color: #b362ff; }
-.function { color: #fad000; }
-.variable { color: #9effff; }

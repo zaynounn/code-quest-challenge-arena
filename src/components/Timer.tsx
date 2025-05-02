@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Clock } from 'lucide-react';
@@ -31,8 +30,8 @@ const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick })
       setLastActiveTime(Date.now());
     }
     
-    // Reset timer when not active
-    if (!isActive && !lastActiveTime) {
+    // Reset timer when not active and not paused
+    if (!isActive && lastActiveTime === null) {
       setRemainingTime(duration);
       setProgress(100);
       return;
@@ -64,8 +63,11 @@ const Timer: React.FC<TimerProps> = ({ duration, isActive, onComplete, onTick })
     return () => {
       if (interval) clearInterval(interval);
       
-      // When timer becomes inactive, clear the lastActiveTime
-      if (!isActive && lastActiveTime !== null) {
+      // When timer becomes inactive but not completed (paused), keep the lastActiveTime
+      if (!isActive && lastActiveTime !== null && remainingTime > 0) {
+        // We're pausing, don't reset lastActiveTime
+      } else if (!isActive) {
+        // Timer completed or reset
         setLastActiveTime(null);
       }
     };

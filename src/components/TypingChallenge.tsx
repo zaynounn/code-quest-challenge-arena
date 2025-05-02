@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface TypingChallengeProps {
   codeText: string;
   onComplete: (typedText: string) => void;
-  onBack?: () => void; // New prop for going back
+  onBack?: () => void;
 }
 
 const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete, onBack }) => {
@@ -22,10 +22,11 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
   const [lineNumbers, setLineNumbers] = useState<string[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const [focusLine, setFocusLine] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState({ line: 0, char: 0 });
+  const [savedTimeElapsed, setSavedTimeElapsed] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const codeBlockRef = useRef<HTMLDivElement>(null);
   const CHALLENGE_DURATION = 180; // 3 minutes in seconds
-  const [savedTimeElapsed, setSavedTimeElapsed] = useState(0);
 
   // Generate line numbers when code changes
   useEffect(() => {
@@ -33,17 +34,27 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
     setLineNumbers(Array.from({ length: lines.length }, (_, i) => (i + 1).toString()));
   }, [codeText]);
 
-  // Calculate current line based on typed text
+  // Calculate current line and character position based on typed text
   useEffect(() => {
-    if (typedText && codeText) {
-      const typedLines = typedText.split('\n').length;
-      setFocusLine(typedLines - 1); // 0-indexed
+    if (typedText) {
+      const lines = typedText.split('\n');
+      const currentLineIndex = lines.length - 1;
+      const currentCharIndex = lines[currentLineIndex]?.length || 0;
+      
+      setFocusLine(currentLineIndex);
+      setCursorPosition({ 
+        line: currentLineIndex, 
+        char: currentCharIndex 
+      });
+    } else {
+      setFocusLine(0);
+      setCursorPosition({ line: 0, char: 0 });
     }
-  }, [typedText, codeText]);
+  }, [typedText]);
 
   // Auto-scroll code block as user types
   useEffect(() => {
-    if (codeBlockRef.current && focusLine > 0) {
+    if (codeBlockRef.current && focusLine > 2) {
       const lineHeight = 24; // approximate height of a line in pixels
       codeBlockRef.current.scrollTop = (focusLine - 5) * lineHeight; // keep 5 lines above visible
     }
@@ -99,6 +110,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
     }
   };
 
+  // Auto-indentation and tab handling
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Prevent tab from moving focus
     if (e.key === 'Tab') {
@@ -119,6 +131,32 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
           inputRef.current.selectionEnd = cursorPosition + 2;
         }
       }, 0);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Get previous line indentation
+      const lines = typedText.split('\n');
+      const currentLine = lines[lines.length - 1] || '';
+      
+      // Count leading spaces in the current line
+      let indent = '';
+      for (let i = 0; i < currentLine.length; i++) {
+        if (currentLine[i] === ' ') {
+          indent += ' ';
+        } else {
+          break;
+        }
+      }
+      
+      // Check if we need to increase indentation (after { or if line ends with { or with special keywords)
+      if (currentLine.trim().endsWith('{') || 
+          /\b(if|for|while|else|try|catch|class|interface)\b.*[^{;]$/.test(currentLine.trim())) {
+        indent += '  '; // Add 2 more spaces for auto-indent
+      }
+      
+      // Apply the new line with indentation
+      const newText = typedText + '\n' + indent;
+      setTypedText(newText);
     }
   };
 
@@ -129,7 +167,11 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
 
   const handleTimerTick = (remainingTime: number) => {
     if (!isPaused) {
-      setTimeElapsed(CHALLENGE_DURATION - remainingTime);
+      const elapsed = CHALLENGE_DURATION - remainingTime + savedTimeElapsed;
+      setTimeElapsed(elapsed);
+    } else {
+      // When paused, save the current elapsed time
+      setSavedTimeElapsed(timeElapsed);
     }
   };
 
@@ -142,12 +184,14 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
       const chars = line.split('');
       const typedLine = typedLines[lineIndex] || '';
       
+      const isCurrentLine = lineIndex === cursorPosition.line;
+      
       return (
-        <div key={lineIndex} className={`flex ${focusLine === lineIndex ? 'bg-secondary/30' : ''}`}>
-          <div className="text-muted-foreground w-8 text-right pr-2 select-none">
+        <div key={lineIndex} className={`flex ${isCurrentLine ? 'bg-secondary/30' : ''}`}>
+          <div className="text-muted-foreground w-12 text-right pr-2 select-none font-mono">
             {lineIndex + 1}
           </div>
-          <div className="code-line flex-1">
+          <div className="code-line flex-1 relative">
             {chars.map((char, charIndex) => {
               let className = "code-character";
               
@@ -158,8 +202,6 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
                   } else {
                     className += " incorrect";
                   }
-                } else if (lineIndex === focusLine && charIndex === typedLine.length) {
-                  className += " current";
                 }
               }
               
@@ -169,12 +211,17 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
               return (
                 <span key={charIndex} className={className}>
                   {displayChar}
+                  {/* Show blinking cursor at current position */}
+                  {isCurrentLine && charIndex === cursorPosition.char && (
+                    <span className="absolute h-5 w-0.5 bg-primary animate-pulse"></span>
+                  )}
                 </span>
               );
             })}
-            {/* Show cursor at current position */}
-            {lineIndex === focusLine && chars.length === typedLines[focusLine].length && (
-              <span className="code-character current"></span>
+            
+            {/* Show cursor at the end of line if needed */}
+            {isCurrentLine && chars.length === cursorPosition.char && (
+              <span className="absolute h-5 w-0.5 bg-primary animate-pulse ml-0.5"></span>
             )}
           </div>
         </div>
@@ -266,7 +313,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
       </div>
 
       <div className="mt-4 text-sm text-muted-foreground">
-        <p>Tips: Press Tab to insert 2 spaces. Type exactly as shown including all symbols and whitespace.</p>
+        <p>Tips: Press Tab to insert 2 spaces. Type exactly as shown including all symbols and whitespace. Auto-indentation is enabled.</p>
       </div>
     </div>
   );
