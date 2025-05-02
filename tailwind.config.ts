@@ -64,8 +64,8 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				code: {
-					DEFAULT: '#1e1e3f',
-					text: '#fff',
+					DEFAULT: 'hsl(var(--code))',
+					text: 'hsl(var(--code-text))',
 					comment: '#b362ff',
 					keyword: '#ff9d00',
 					string: '#ff628c',
@@ -108,12 +108,16 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
+				},
+				'blink': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'cursor-blink': 'cursor-blink 1s infinite',
+				'cursor-blink': 'blink 1s step-end infinite',
 				'fade-in': 'fade-in 0.3s ease-out'
 			},
 			fontFamily: {

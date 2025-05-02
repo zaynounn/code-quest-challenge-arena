@@ -191,7 +191,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
           <div className="text-muted-foreground w-12 text-right pr-2 select-none font-mono">
             {lineIndex + 1}
           </div>
-          <div className="code-line flex-1 relative">
+          <div className="code-line flex-1">
             {chars.map((char, charIndex) => {
               let className = "code-character";
               
@@ -213,7 +213,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
                   {displayChar}
                   {/* Show blinking cursor at current position */}
                   {isCurrentLine && charIndex === cursorPosition.char && (
-                    <span className="absolute h-5 w-0.5 bg-primary animate-pulse"></span>
+                    <span className="code-cursor"></span>
                   )}
                 </span>
               );
@@ -221,7 +221,7 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
             
             {/* Show cursor at the end of line if needed */}
             {isCurrentLine && chars.length === cursorPosition.char && (
-              <span className="absolute h-5 w-0.5 bg-primary animate-pulse ml-0.5"></span>
+              <span className="code-cursor"></span>
             )}
           </div>
         </div>
@@ -290,7 +290,8 @@ const TypingChallenge: React.FC<TypingChallengeProps> = ({ codeText, onComplete,
       <div className="relative overflow-hidden border border-secondary rounded-lg">
         <ScrollArea className="h-[500px]">
           <div 
-            className="p-6 bg-code rounded-lg font-mono text-sm"
+            className="p-6 rounded-lg font-mono text-sm"
+            style={{ backgroundColor: 'hsl(var(--code))', color: 'hsl(var(--code-text))' }}
             ref={codeBlockRef}
           >
             <div className="code-block flex flex-col">

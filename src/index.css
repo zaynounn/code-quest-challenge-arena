@@ -25,7 +25,9 @@
     --input: 240 5.9% 90%;
     --ring: 142.1 76.2% 36.3%;
     --radius: 0.5rem;
-    --code: 220 13% 18%;
+    --code: 220 14% 96%;
+    --code-text: 220 14% 20%;
+    --cursor: 142.1 76.2% 36.3%;
   }
 
   .dark {
@@ -49,6 +51,8 @@
     --input: 240 3.7% 15.9%;
     --ring: 142.4 71.8% 29.2%;
     --code: 220 13% 18%;
+    --code-text: 220 14% 90%;
+    --cursor: 142.1 70.6% 45.3%;
   }
 }
 
@@ -96,6 +100,24 @@
 
   .stat-item {
     @apply bg-secondary/10 px-4 py-2 rounded-md backdrop-blur-sm transition-all hover:bg-secondary/20;
+  }
+  
+  .code-line {
+    @apply relative;
+    min-height: 1.5rem;
+  }
+  
+  .code-cursor {
+    @apply absolute inline-block;
+    height: 1.2rem;
+    width: 2px;
+    background-color: hsl(var(--cursor));
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 }
 
